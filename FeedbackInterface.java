@@ -23,7 +23,7 @@ public class FeedbackInterface {
             System.out.println("3. Exit to main menu");
             
             System.out.print("\nChoose an option (1-3): ");
-            String choice = scanner.nextLine();
+            String choice = scanner.next();
             
             switch (choice) {
                 case "1":
@@ -44,10 +44,10 @@ public class FeedbackInterface {
     private void loginAndProvideFeedback() {
         System.out.println("\n=== Login to provide feedback ===");
         System.out.print("Username: ");
-        String username = scanner.nextLine();
+        String username = scanner.next();
         
         System.out.print("Password: ");
-        String password = scanner.nextLine();
+        String password = scanner.next();
         
         User user = loginSystem.login(username, password);
         
@@ -61,7 +61,7 @@ public class FeedbackInterface {
     private void provideFeedback() {
         System.out.println("\n=== Location Feedback System ===");
         System.out.println("Enter the location you'd like to give feedback on:");
-        String feedbackLocName = scanner.nextLine();
+        String feedbackLocName = scanner.next();
         Location feedbackLoc = LocationService.geocode(feedbackLocName);
         
         feedbackSystem.applyFeedbackToLocation(scanner, feedbackLoc, graph);
