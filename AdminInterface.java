@@ -23,7 +23,7 @@ public class AdminInterface {
             System.out.println("5. Exit to main menu");
             
             System.out.print("\nChoose an option (1-5): ");
-            String choice = scanner.nextLine();
+            String choice = scanner.next();
             
             switch (choice) {
                 case "1":
@@ -50,11 +50,11 @@ public class AdminInterface {
     private void testRouteFinding() {
         graph.displayAvailablePaths();
         System.out.println("Enter start location (Home / Office / Market / Mall / Restroom / Park / University):");
-        String startInput = scanner.nextLine();
+        String startInput = scanner.next();
         Location start = LocationService.geocode(startInput);
 
         System.out.println("Enter destination location (Home / Office / Market / Mall / Restroom / Park / University):");
-        String endInput = scanner.nextLine();
+        String endInput = scanner.next();
         Location end = LocationService.geocode(endInput);
 
         // Find and display safest path
