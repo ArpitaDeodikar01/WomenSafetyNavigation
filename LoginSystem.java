@@ -45,13 +45,13 @@ public class LoginSystem {
         System.out.println("\n=== New User Registration ===");
         
         System.out.print("Enter username: ");
-        String username = scanner.nextLine();
+        String username = scanner.next();
         
         System.out.print("Enter your name: ");
-        String name = scanner.nextLine();
+        String name = scanner.next();
         
         System.out.print("Create password: ");
-        String password = scanner.nextLine();
+        String password = scanner.next();
         
         registerUser(username, name, password, false);
         return users.get(username);
