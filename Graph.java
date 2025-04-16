@@ -23,21 +23,80 @@ public class Graph {
         adjList.putIfAbsent(location, new ArrayList<>());
     }
 
-    void addEdge(Location from, Location to, double safetyRating) {
-        Edge edge = new Edge(from, to, safetyRating);
+    void addEdge(Location from, Location to, double safetyRating, double distance) {
+        Edge edge = new Edge(from, to, safetyRating, distance);
         adjList.get(from).add(edge);
     }
+
+    public Location findSafestNearestSpot(Location start) {
+        // PriorityQueue stores locations based on a combined safety score (safetyRating and distance)
+        PriorityQueue<Location> pq = new PriorityQueue<>(Comparator.comparingDouble(location -> getSafetyScoreWithDistance(location, start)));
+        Set<Location> visited = new HashSet<>();
+        
+        // Add the start location to the queue with an initial distance of 0.
+        pq.add(start);
+    
+        while (!pq.isEmpty()) {
+            Location current = pq.poll();
+    
+            // If the location is already visited, skip it
+            if (visited.contains(current)) {
+                continue;
+            }
+            visited.add(current);
+    
+            // Check if we found a valid safest spot; if we find one, return it immediately
+            if (!current.equals(start)) {
+                return current;  // Found the nearest safest location
+            }
+    
+            // Check all neighbors and add them to the queue
+            for (Edge edge : adjList.getOrDefault(current, new ArrayList<>())) {
+                Location neighbor = edge.to;
+                if (!visited.contains(neighbor)) {
+                    pq.add(neighbor); // Add to the queue for further processing
+                }
+            }
+        }
+    
+        // If no nearest safe spot was found, return null or a default message
+        return null;
+    }
+    
+    // Calculate the safety score considering both safety and distance from the start location
+    double getSafetyScoreWithDistance(Location location, Location start) {
+        double safetyScore = 0;
+        double totalDistance = 0;
+        List<Edge> edges = adjList.get(location);
+    
+        if (edges != null && !edges.isEmpty()) {
+            for (Edge edge : edges) {
+                // SafetyRating affects the score; distance is used as a secondary factor
+                safetyScore += edge.safetyRating;
+                totalDistance += edge.distance;
+            }
+            // Combine the safety and distance factors
+            // You can adjust the logic here to give more weight to safety or distance as needed
+            safetyScore = safetyScore / edges.size() + totalDistance / edges.size();
+        }
+    
+        return safetyScore;
+    }
+    
+    
 
     List<Location> findSafestPath(Location start, Location end) {
         Map<Location, Double> dist = new HashMap<>();
         Map<Location, Location> prev = new HashMap<>();
         Set<Location> visited = new HashSet<>();
 
+        // Initialize distances to infinity
         for (Location loc : adjList.keySet()) {
             dist.put(loc, Double.MAX_VALUE);
         }
         dist.put(start, 0.0);
 
+        // PriorityQueue based on distance (danger score considering safety and distance)
         PriorityQueue<Location> pq = new PriorityQueue<>(Comparator.comparingDouble(dist::get));
         pq.add(start);
 
@@ -48,7 +107,8 @@ public class Graph {
 
             List<Edge> edges = adjList.getOrDefault(current, new ArrayList<>());
             for (Edge edge : edges) {
-                double dangerScore = 1.0 - edge.safetyRating; // Higher safetyRating = safer path
+                // We consider both safety rating and distance in the danger score calculation
+                double dangerScore = 1.0 - edge.safetyRating + edge.distance; // Higher safetyRating = safer path
                 double newDist = dist.get(current) + dangerScore;
 
                 if (newDist < dist.get(edge.to)) {
@@ -59,12 +119,29 @@ public class Graph {
             }
         }
 
+        // Rebuild the path
         List<Location> path = new ArrayList<>();
         for (Location at = end; at != null; at = prev.get(at)) {
             path.add(at);
         }
-        Collections.reverse(path);
+        Collections.reverse(path); // Reverse to get the path from start to end
         return path;
+    }
+
+    // Get safety score for a location considering both safety rating and distance
+    double getSafetyScore(Location location) {
+        double totalSafety = 0;
+        double totalDistance = 0;
+        List<Edge> edges = adjList.get(location);
+        if (edges == null || edges.isEmpty()) {
+            return 0;
+        }
+        for (Edge edge : edges) {
+            totalSafety += edge.safetyRating;
+            totalDistance += edge.distance;
+        }
+        // Consider both safety and distance when calculating the safety score
+        return totalSafety / edges.size() + totalDistance / edges.size();
     }
 
     void updateEdgeSafety(Location from, Location to, double newSafetyRating) {
@@ -107,3 +184,4 @@ public class Graph {
         return 0.0; // if edge doesn't exist
     }
 }
+
