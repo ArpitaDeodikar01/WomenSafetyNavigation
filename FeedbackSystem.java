@@ -13,14 +13,14 @@ public class FeedbackSystem {
         System.out.println("Which parameters do you want to adjust?");
         System.out.println("Available: streetlights / crowd / cctv");
         System.out.println("Type parameters separated by commas (e.g., streetlights,crowd):");
-        String[] selectedParams = scanner.nextLine().toLowerCase().split(",");
+        String[] selectedParams = scanner.next().toLowerCase().split(",");
 
         for (String param : selectedParams) {
             param = param.trim(); // clean whitespace
 
             if (weights.containsKey(param)) {
                 System.out.println("Feedback for " + param + " (safe / unsafe):");
-                String feedback = scanner.nextLine().toLowerCase();
+                String feedback = scanner.next().toLowerCase();
 
                 try {
                     String encryptedFeedback = EncryptionUtil.encrypt(feedback);
@@ -62,7 +62,7 @@ public class FeedbackSystem {
 
             while (!validFeedback) {
                 System.out.println("Feedback for " + param + " (safe / unsafe):");
-                feedback = scanner.nextLine().toLowerCase();
+                feedback = scanner.next().toLowerCase();
 
                 if (feedback.equals("safe") || feedback.equals("unsafe")) {
                     validFeedback = true;
@@ -113,7 +113,7 @@ public class FeedbackSystem {
         }
         
         System.out.println("\nEnter location name to update:");
-        String locationName = scanner.nextLine();
+        String locationName = scanner.next();
         
         Map<String, Double> attributes = SafetyDatabase.getLocationAttributes(locationName);
         if (attributes.isEmpty()) {
@@ -132,7 +132,7 @@ public class FeedbackSystem {
         for (String param : attributes.keySet()) {
             System.out.printf("New value for %s (current: %.2f): ", param, attributes.get(param));
             try {
-                double newValue = Double.parseDouble(scanner.nextLine());
+                double newValue = Double.parseDouble(scanner.next());
                 newValue = Math.max(0.0, Math.min(1.0, newValue)); // Clamp between 0 and 1
                 updatedAttributes.put(param, newValue);
             } catch (NumberFormatException e) {
