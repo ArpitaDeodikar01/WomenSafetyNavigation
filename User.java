@@ -25,7 +25,7 @@ public class User {
             }
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Encryption error", e);
+            throw new RuntimeException("Encryption error :(", e);
         }
     }
 
@@ -34,17 +34,17 @@ public class User {
     }
 
     public void displayUserInfo() {
-        System.out.println("\n👤 User Info:");
+        System.out.println("\n User Info: \n");
         System.out.println("Username: " + username);
         System.out.println("Name: " + name);
-        System.out.println("Role: " + (isAdmin ? "Administrator" : "Regular User"));
-        System.out.println("Password (Encrypted): 🔐 " + encryptedPassword.substring(0, 12) + "...");
+        System.out.println("Role: " + (isAdmin ? "* Administrator * " : "* Regular User *"));
+        System.out.println("Password (Encrypted): * " + encryptedPassword.substring(0, 12) + "...");
     }
 
     public String getUsername() {
         return username;
     }
-    
+
     public boolean isAdmin() {
         return isAdmin;
     }
