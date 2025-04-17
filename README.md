@@ -1,55 +1,39 @@
-public Location findSafestNearestSpot(Location currLocation) {
-    // g(n): Actual distance from start to current node
-    Map<Location, Double> gScore = new HashMap<>();
-    gScore.put(currLocation, 0.0);
+**** 🚨 SecureHers - Women Safety Navigation System 🚨 ****
 
-    // f(n): Estimated total cost (g + heuristic)
-    PriorityQueue<Location> openSet = new PriorityQueue<>(Comparator.comparingDouble(loc ->
-        gScore.getOrDefault(loc, Double.MAX_VALUE) + getHeuristic(loc, currLocation)
-    ));
+Language: Java
+Algorithms Used:  Dijkstra’s Algorithm, A* Algorithm
+Data Structure Used: Hashmap, Graphs, PriorityQueues, ArrayList
 
-    Set<Location> visited = new HashSet<>();
-    openSet.add(currLocation);
+OVERVIEW:
+Our Women Safety Navigation System is a smart Path Finding tool designed to navigate Urban areas with enhanced security. Built using Graph based Algorithms and real time feedback with all important necessary features, It prioritises safety in every step.
 
-    while (!openSet.isEmpty()) {
-        Location current = openSet.poll();
+🧠 Core Technology:
+Utilizes Dijkstra’s Algorithm on a weighted graph where edges represent roads with safety ratings.
+Applies A* Algorithm to locate the nearest safest spot from the user’s current location, considering both distance and safety.
 
-        if (visited.contains(current)) continue;
-        visited.add(current);
+📌 Key Features:
+✅ Three-Parameter Safety Rating: Each road segment is rated based on: 🔑 Presence of Streetlights
+                                                                       🔑 Availability of CCTV Cameras
+                                                                       🔑 Crowd Density
 
-        // Return the first valid spot that is not the current location
-        if (!current.equals(currLocation)) {
-            return current;
-        }
+🧭 Safest Route Finder: Suggests routes that maximize safety using real-time weighted graph calculations.
 
-        for (Edge edge : adjList.getOrDefault(current, new ArrayList<>())) {
-            Location neighbor = edge.to;
-            double tentativeG = gScore.get(current) + edge.distance;
+📍 Nearest Safe Location Finder: Quickly guides users to the nearest safe area in case of emergency.
 
-            if (tentativeG < gScore.getOrDefault(neighbor, Double.MAX_VALUE)) {
-                gScore.put(neighbor, tentativeG);
-                openSet.add(neighbor);
-            }
-        }
-    }
+🔐 Admin Login System: Enables admins to: 🔑 Modify or reset safety ratings 
+                                          🔑 Oversee and manage feedback data
 
-    return null;
-}
+🙋‍♀️ User Registration & Login: Required for: 🔑 Securing access
+                                            🔑  Submitting verified feedback
 
-// Heuristic: Combines safety and distance (as in your original code)
-double getHeuristic(Location location, Location start) {
-    double safetyScore = 0;
-    double totalDistance = 0;
-    List<Edge> edges = adjList.get(location);
+🧾 Encrypted Passwords: User credentials are stored securely using basic encryption.
 
-    if (edges != null && !edges.isEmpty()) {
-        for (Edge edge : edges) {
-            safetyScore += edge.safetyRating;
-            totalDistance += edge.distance;
-        }
-        return safetyScore / edges.size() + totalDistance / edges.size();
-    }
+📦 Modular Architecture: Clean separation of logic across multiple classes for scalability and ease of maintenance.
 
-    return Double.MAX_VALUE; // if no data, assume worst
-}
+🌟 Unique Value Proposition (UVP):
+     📢 User Feedback System: After navigating a route, users can rate their experience based on safety.
+     📢 Feedback directly updates safety ratings, making the system community-driven, dynamic, and constantly improving.
+
+
+
 
