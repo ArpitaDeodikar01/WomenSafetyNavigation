@@ -3,174 +3,167 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class FeedbackSystem {
-    Map<String, Double> weights;
+    private final Map<String, Double> weights;
+    private static final double FEEDBACK_INCREMENT = 0.1;
+    private static final double MIN_SAFETY_VALUE = 0.1;
+    private static final double MAX_SAFETY_VALUE = 1.0;
 
-    FeedbackSystem(Map<String, Double> initialWeights) {
+    public FeedbackSystem(Map<String, Double> initialWeights) {
         this.weights = new HashMap<>(initialWeights);
     }
 
-    void updateWeightsInteractive(Scanner scanner) {
-        System.out.println("Which parameters do you want to adjust?");
-        System.out.println("Available: streetlights / crowd / cctv");
-        System.out.println("Type parameters separated by commas (e.g., streetlights,crowd):");
-        String[] selectedParams = scanner.next().toLowerCase().split(",");
+    public void updateWeightsInteractive(Scanner scanner) {
+        System.out.println("\n=== Update Safety Weights === \n");
+        System.out.println("Current weights:");
+        weights.forEach((k, v) -> System.out.printf("- %s: %.2f%n", k, v));
+
+        System.out.println("\nEnter parameters to adjust (comma separated, e.g., streetlights,crowd):");
+        String[] selectedParams = scanner.nextLine().toLowerCase().split(",");
 
         for (String param : selectedParams) {
-            param = param.trim(); // clean whitespace
+            param = param.trim();
+            if (!weights.containsKey(param)) {
+                System.out.println("Skipping invalid parameter: " + param);
+                continue;
+            }
 
-            if (weights.containsKey(param)) {
-                System.out.println("Feedback for " + param + " (safe / unsafe):");
-                String feedback = scanner.next().toLowerCase();
+            System.out.printf("Adjust %s (current: %.2f). Enter change [+/- value]: ", param, weights.get(param));
+            try {
+                String input = scanner.nextLine();
+                double change = input.startsWith("-") ? -Double.parseDouble(input.substring(1))
+                        : Double.parseDouble(input);
 
-                try {
-                    String encryptedFeedback = EncryptionUtil.encrypt(feedback);
-                    String decryptedFeedback = EncryptionUtil.decrypt(encryptedFeedback);
-
-                    double change = decryptedFeedback.equals("safe") ? 0.1 : -0.1;
-                    double current = weights.get(param);
-                    double newValue = Math.max(0.1, Math.min(1.0, current + change));
-                    weights.put(param, newValue);
-
-                    System.out.printf("Encrypted feedback: %s%n", encryptedFeedback);
-                    System.out.printf("Updated %s weight from %.2f to %.2f%n", param, current, newValue);
-
-                } catch (Exception e) {
-                    System.out.println("Encryption error: " + e.getMessage());
-                }
-
-            } else {
-                System.out.println("Invalid parameter: " + param);
+                double newValue = clampValue(weights.get(param) + change);
+                weights.put(param, newValue);
+                System.out.printf("Updated %s weight to %.2f%n", param, newValue);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input :( No changes made to " + param);
             }
         }
     }
 
-    void applyFeedbackToLocation(Scanner scanner, Location location, Graph graph) {
-        String locName = location.name;
-        Map<String, Double> currentAttributes = SafetyDatabase.safetyData.get(locName);
-
-        if (currentAttributes == null) {
-            System.out.println("No safety data found for this location.");
+    public void applyFeedbackToLocation(Scanner scanner, Location location, Graph graph) {
+        if (location == null || graph == null) {
+            System.out.println("Invalid location or graph reference :(");
             return;
         }
 
-        Map<String, Double> updatedAttributes = new HashMap<>(currentAttributes);
+        String locName = location.name;
+        Map<String, Double> currentAttributes = SafetyDatabase.getLocationAttributes(locName);
 
-        System.out.println("Provide feedback for " + locName);
+        if (currentAttributes == null || currentAttributes.isEmpty()) {
+            System.out.println("No safety data found for " + locName);
+            return;
+        }
+
+        System.out.println("\n=== Provide Feedback for " + locName + " ===");
+        Map<String, Double> updatedAttributes = new HashMap<>();
+
         for (String param : currentAttributes.keySet()) {
-            boolean validFeedback = false;
-            String feedback = "";
+            if (param.equals("weightedScore"))
+                continue; // Skip calculated field
 
-            while (!validFeedback) {
-                System.out.println("Feedback for " + param + " (safe / unsafe):");
-                feedback = scanner.next().toLowerCase();
+            double currentValue = currentAttributes.get(param);
+            System.out.printf("Current %s rating: %.2f%n", param, currentValue);
 
-                if (feedback.equals("safe") || feedback.equals("unsafe")) {
-                    validFeedback = true;
-                } else {
-                    System.out.println("Invalid feedback. Please enter 'safe' or 'unsafe'.");
-                }
-            }
+            String feedback = getValidFeedback(scanner, param);
+            double change = feedback.equals("safe") ? FEEDBACK_INCREMENT : -FEEDBACK_INCREMENT;
+            double newValue = clampValue(currentValue + change);
 
-            double change = feedback.equals("safe") ? 0.1 : -0.1;
-            double current = currentAttributes.get(param);
-            double newValue = Math.max(0.1, Math.min(1.0, current + change));
             updatedAttributes.put(param, newValue);
+            System.out.printf("Updated %s from %.2f to %.2f%n", param, currentValue, newValue);
         }
 
-        // Update the SafetyDatabase with the new attributes
-        SafetyDatabase.addSafetyAttributes(locName, updatedAttributes);
-
-        // Recalculate the new average safety rating for this location
-        double newRating = SafetyDatabase.calculateSafetyRating(locName);
-
-        // Update all edges that connect to/from this location
-        for (Location other : graph.adjList.keySet()) {
-            // Update the edges from other locations to this location
-            for (Edge edge : graph.adjList.get(other)) {
-                if (edge.to.equals(location)) {
-                    double otherRating = SafetyDatabase.calculateSafetyRating(other.name);
-                    edge.safetyRating = (otherRating + newRating) / 2;
-                }
-            }
-
-            // Update the edges from this location to others
-            for (Edge edge : graph.adjList.get(location)) {
-                double otherRating = SafetyDatabase.calculateSafetyRating(edge.to.name);
-                edge.safetyRating = (otherRating + newRating) / 2;
-            }
-        }
-
-        System.out.println("Updated safety rating for " + locName + ": " + newRating);
+        updateLocationSafety(locName, updatedAttributes, graph);
     }
 
-    void adminUpdateLocationSafety(Scanner scanner, Graph graph) {
-        System.out.println("\n==== Admin Safety Parameter Update ====");
+    public void adminUpdateLocationSafety(Scanner scanner, Graph graph) {
+        System.out.println("\n=== Admin Safety Update ===");
         System.out.println("Available locations:");
-        
-        // Get all locations from the safety database
-        for (String locName : SafetyDatabase.safetyData.keySet()) {
-            System.out.println("- " + locName);
-        }
-        
-        System.out.println("\nEnter location name to update:");
+        SafetyDatabase.safetyData.keySet().forEach(loc -> System.out.println("- " + loc));
+
+        System.out.print("\nEnter location name: ");
         String locationName = scanner.next();
-        
+
         Map<String, Double> attributes = SafetyDatabase.getLocationAttributes(locationName);
         if (attributes.isEmpty()) {
-            System.out.println("Location not found!");
+            System.out.println("Location not found! :()");
             return;
         }
-        
-        Map<String, Double> updatedAttributes = new HashMap<>(attributes);
-        System.out.println("\nCurrent safety parameters for " + locationName + ":");
-        
-        for (Map.Entry<String, Double> entry : attributes.entrySet()) {
-            System.out.printf("%s: %.2f\n", entry.getKey(), entry.getValue());
-        }
-        
-        System.out.println("\nEnter new values (between 0.0 and 1.0):");
+
+        System.out.println("\nCurrent safety parameters:");
+        attributes.forEach((k, v) -> System.out.printf("- %s: %.2f%n", k, v));
+
+        Map<String, Double> updatedAttributes = new HashMap<>();
         for (String param : attributes.keySet()) {
-            System.out.printf("New value for %s (current: %.2f): ", param, attributes.get(param));
+            if (param.equals("weightedScore"))
+                continue;
+
+            System.out.printf("Enter new value for %s (current: %.2f): ", param, attributes.get(param));
             try {
                 double newValue = Double.parseDouble(scanner.next());
-                newValue = Math.max(0.0, Math.min(1.0, newValue)); // Clamp between 0 and 1
-                updatedAttributes.put(param, newValue);
+                updatedAttributes.put(param, clampValue(newValue));
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Keeping current value.");
+                System.out.println("Invalid input :(. Keeping current value.");
+                updatedAttributes.put(param, attributes.get(param));
             }
         }
-        
-        // Update the SafetyDatabase with new values
-        SafetyDatabase.addSafetyAttributes(locationName, updatedAttributes);
-        
-        // Recalculate safety ratings for all edges
-        Location location = LocationService.geocode(locationName);
-        double newRating = SafetyDatabase.calculateSafetyRating(locationName);
-        
-        // Update all edges that connect to/from this location
-        for (Location other : graph.adjList.keySet()) {
-            // Update the edges from other locations to this location
-            for (Edge edge : graph.adjList.get(other)) {
-                if (edge.to.equals(location)) {
-                    double otherRating = SafetyDatabase.calculateSafetyRating(other.name);
-                    edge.safetyRating = (otherRating + newRating) / 2;
-                }
-            }
 
-            // Update the edges from this location to others
-            if (graph.adjList.containsKey(location)) {
-                for (Edge edge : graph.adjList.get(location)) {
-                    double otherRating = SafetyDatabase.calculateSafetyRating(edge.to.name);
-                    edge.safetyRating = (otherRating + newRating) / 2;
-                }
-            }
-        }
-        
-        System.out.println("✅ Successfully updated safety parameters for " + locationName);
-        System.out.println("New safety rating: " + newRating);
+        updateLocationSafety(locationName, updatedAttributes, graph);
     }
 
-    Map<String, Double> getWeights() {
+    public Map<String, Double> getWeights() {
         return new HashMap<>(weights);
+    }
+
+    // Helper Methods
+    private String getValidFeedback(Scanner scanner, String param) {
+        while (true) {
+            System.out.printf("Feedback for %s (safe/unsafe): ", param);
+            String input = scanner.next().toLowerCase();
+            if (input.equals("safe") || input.equals("unsafe")) {
+                return input;
+            }
+            System.out.println("Invalid input. Please enter 'safe' or 'unsafe'.");
+        }
+    }
+
+    private double clampValue(double value) {
+        return Math.max(MIN_SAFETY_VALUE, Math.min(MAX_SAFETY_VALUE, value));
+    }
+
+    private void updateLocationSafety(String locationName, Map<String, Double> updatedAttributes, Graph graph) {
+        // Update database with new attributes
+        SafetyDatabase.addSafetyAttributes(locationName, updatedAttributes);
+
+        // Recalculate safety rating
+        double newRating = SafetyDatabase.calculateSafetyRating(locationName);
+        Location location = LocationService.geocode(locationName);
+
+        // Update all connected edges
+        updateConnectedEdges(graph, location, newRating);
+
+        System.out.printf("%n✅ Successfully updated %s%n", locationName);
+        System.out.printf("New safety rating: %.2f%n", newRating);
+    }
+
+    private void updateConnectedEdges(Graph graph, Location location, double newRating) {
+        // Update edges TO this location
+        graph.adjList.forEach((source, edges) -> {
+            edges.stream()
+                    .filter(edge -> edge.to.equals(location))
+                    .forEach(edge -> {
+                        double sourceRating = SafetyDatabase.calculateSafetyRating(source.name);
+                        edge.safetyRating = (sourceRating + newRating) / 2;
+                    });
+        });
+
+        // Update edges FROM this location
+        if (graph.adjList.containsKey(location)) {
+            graph.adjList.get(location).forEach(edge -> {
+                double destRating = SafetyDatabase.calculateSafetyRating(edge.to.name);
+                edge.safetyRating = (newRating + destRating) / 2;
+            });
+        }
     }
 }
