@@ -144,32 +144,32 @@ public class Main {
         double uniRating = SafetyDatabase.calculateSafetyRating("University");
 
         // Bidirectional graph edges using average safety ratings
-        graph.addEdge(home, office, (homeRating + officeRating) / 2,15);
-        graph.addEdge(office, home, (homeRating + officeRating) / 2,15);
+        graph.addEdge(home, office, 0.75,15);
+        graph.addEdge(office, home, 0.75,15);
 
-        graph.addEdge(home, market, (homeRating + marketRating) / 2,8);
-        graph.addEdge(market, home, (homeRating + marketRating) / 2,8);
+        graph.addEdge(home, market, 0.75,8);
+        graph.addEdge(market, home, 0.75,8);
 
-        graph.addEdge(home, mall, (homeRating + mallRating) / 2,10);
-        graph.addEdge(mall, home, (homeRating + mallRating) / 2,10);
+        graph.addEdge(home, mall, 0.7,10);
+        graph.addEdge(mall, home, 0.7,10);
 
-        graph.addEdge(mall, restroom, (mallRating + restroomRating) / 2,2);
-        graph.addEdge(restroom, mall, (mallRating + restroomRating) / 2,2);
+        graph.addEdge(mall, restroom, 0.35,2);
+        graph.addEdge(restroom, mall, 0.35,2);
 
-        graph.addEdge(mall, park, (mallRating + parkRating) / 2,5);
-        graph.addEdge(park, mall, (mallRating + parkRating) / 2,5);
+        graph.addEdge(mall, park, 0.45,5);
+        graph.addEdge(park, mall, 0.45,5);
 
-        graph.addEdge(park, uni, (parkRating + uniRating) / 2,10);
-        graph.addEdge(uni, park, (parkRating + uniRating) / 2,10);
+        graph.addEdge(park, uni, 0.6,10);
+        graph.addEdge(uni, park, 0.6,10);
 
-        graph.addEdge(market, restroom, (marketRating + restroomRating) / 2,1);
-        graph.addEdge(restroom, market, (marketRating + restroomRating) / 2,1);
+        graph.addEdge(market, restroom, 0.4,1);
+        graph.addEdge(restroom, market, 0.4,1);
 
-        graph.addEdge(office, uni, (officeRating + uniRating) / 2,7);
-        graph.addEdge(uni, office, (officeRating + uniRating) / 2,7);
+        graph.addEdge(office, uni, 0.7,7);
+        graph.addEdge(uni, office, 0.7,7);
 
-        graph.addEdge(market, mall, (marketRating + mallRating) / 2,4);
-        graph.addEdge(mall, market, (marketRating + mallRating) / 2,4);
+        graph.addEdge(market, mall, 0.55,4);
+        graph.addEdge(mall, market, 0.55,4);
         
         return graph;
     }
