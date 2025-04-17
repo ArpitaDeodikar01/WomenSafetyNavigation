@@ -19,11 +19,11 @@ public class SafetyDatabase {
         }
         return (float) (total / attributes.size()); // Average safety rating
     }
-    
+
     static Map<String, Double> getLocationAttributes(String locationName) {
         return safetyData.getOrDefault(locationName, new HashMap<>());
     }
-    
+
     static void initializeDatabase() {
         // Add safety attributes for each location
         addSafetyAttributes("Home", Map.of("streetlights", 0.9, "crowd", 0.9, "cctv", 0.9));
