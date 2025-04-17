@@ -14,52 +14,52 @@ public class LoginSystem {
     // Register a new user
     public void registerUser(String username, String name, String password, boolean isAdmin) {
         if (users.containsKey(username)) {
-            System.out.println("⚠️ Username '" + username + "' already exists!");
+            System.out.println(" Username '" + username + "' already exists!");
             return;
         }
         User newUser = new User(username, name, password, isAdmin);
         users.put(username, newUser);
-        System.out.println("✅ Registration successful for " + username + "!");
+        System.out.println(" :) Registration successful for " + username + "!");
     }
 
     // Attempt to log a user in
     public User login(String username, String password) {
         User user = users.get(username);
         if (user == null) {
-            System.out.println("❌ User not found!");
+            System.out.println(" :( User not found!");
             return null;
         }
 
         if (user.checkPassword(password)) {
-            System.out.println("✅ Login successful!");
+            System.out.println(": ) Login successful!");
             user.displayUserInfo();
             return user;
         } else {
-            System.out.println("❌ Incorrect password!");
+            System.out.println(" : ( Incorrect password!");
             return null;
         }
     }
 
     // User registration process
     public User registerNewUser(Scanner scanner) {
-        System.out.println("\n=== New User Registration ===");
-        
+        System.out.println("\n=== New User Registration === \n");
+
         System.out.print("Enter username: ");
-        String username = scanner.next();
-        
+        String username = scanner.nextLine();
+
         System.out.print("Enter your name: ");
-        String name = scanner.next();
-        
+        String name = scanner.nextLine();
+
         System.out.print("Create password: ");
-        String password = scanner.next();
-        
+        String password = scanner.nextLine();
+
         registerUser(username, name, password, false);
         return users.get(username);
     }
 
     // Optional: Display all users (for debugging)
     public void displayAllUsers() {
-        System.out.println("\n📋 Registered Users:");
+        System.out.println("\n Registered Users: \n");
         for (User user : users.values()) {
             user.displayUserInfo();
         }
